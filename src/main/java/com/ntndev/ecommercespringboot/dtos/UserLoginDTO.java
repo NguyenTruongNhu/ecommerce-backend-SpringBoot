@@ -8,6 +8,8 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 public class UserLoginDTO {
 
     @JsonProperty("phone_number")
