@@ -2,7 +2,9 @@ package com.ntndev.ecommercespringboot.controller;
 
 import com.ntndev.ecommercespringboot.dtos.UserDTO;
 import com.ntndev.ecommercespringboot.dtos.UserLoginDTO;
+import com.ntndev.ecommercespringboot.services.UserService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +16,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("${api.prefix}/users")
+@RequiredArgsConstructor
 public class UserController {
+
+    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserDTO userDTO, BindingResult result) {
@@ -31,7 +36,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Passwords do not match!");
             }
 
-
+            userService.createUser(userDTO);
             return ResponseEntity.ok("Registration successful!");
 
         } catch (Exception e) {
