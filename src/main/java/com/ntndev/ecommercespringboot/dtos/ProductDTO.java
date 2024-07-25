@@ -1,5 +1,6 @@
 package com.ntndev.ecommercespringboot.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -24,7 +25,7 @@ public class ProductDTO {
     private float price;
     private String thumbnail;
     private String description;
-    @JsonPropertyOrder("category_id")
+    @JsonProperty("category_id")
     private String categoryId;
     private List<MultipartFile> files;
 
