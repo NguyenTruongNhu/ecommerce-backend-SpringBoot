@@ -1,7 +1,19 @@
 package com.ntndev.ecommercespringboot.controller;
 
+import com.github.javafaker.Faker;
 import com.ntndev.ecommercespringboot.dtos.ProductDTO;
+import com.ntndev.ecommercespringboot.dtos.ProductImageDTO;
+import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
+import com.ntndev.ecommercespringboot.models.Product;
+import com.ntndev.ecommercespringboot.models.ProductImage;
+import com.ntndev.ecommercespringboot.responses.ProductListResponse;
+import com.ntndev.ecommercespringboot.responses.ProductResponse;
+import com.ntndev.ecommercespringboot.services.ProductService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -18,21 +30,39 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("${api.prefix}/products")
+@RequiredArgsConstructor
 public class ProductController {
 
+    private final ProductService productService;
+
     @GetMapping("")
-    public ResponseEntity<?> getProducts() {
+    public ResponseEntity<ProductListResponse> getProducts(
+            @RequestParam("page") int page,
+            @RequestParam("limit") int limit
+    ) {
 
+        PageRequest pageRequest = PageRequest.of(
+                page, limit,
+                Sort.by("createdAt").descending());
+        Page<ProductResponse> productPage = productService.getAllProducts(pageRequest);
 
-        return ResponseEntity.ok("Hello Product ");
+        int totalPages = productPage.getTotalPages();
+        List<ProductResponse> products = productPage.getContent();
+
+        return ResponseEntity.ok(ProductListResponse.builder()
+                .products(products)
+                .totalPages(totalPages)
+                .build());
     }
 
-    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createProduct(@Valid @ModelAttribute ProductDTO productDTO
+    @PostMapping("")
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductDTO productDTO
+
             , BindingResult result) {
         try {
             if (result.hasErrors()) {
@@ -41,10 +71,32 @@ public class ProductController {
                         .toList();
                 return ResponseEntity.badRequest().body(errorMessages);
             }
-            List<MultipartFile> files = productDTO.getFiles();
-            files = files == null ? new  ArrayList<MultipartFile>() : files;
+
+            Product newProduct = productService.createProduct(productDTO);
+
+
+            return ResponseEntity.ok(newProduct);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
+
+    @PostMapping(value = "uploads/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImages(
+            @PathVariable("id") Long productId
+            , @ModelAttribute("files") List<MultipartFile> files) {
+
+        try {
+            Product existingroduct = productService.getProductById(productId);
+            files = files == null ? new ArrayList<MultipartFile>() : files;
+            if (files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("You can only upload a maximum of 5 images");
+            }
+            List<ProductImage> productImages = new ArrayList<>();
             for (MultipartFile file : files) {
-                if(file.getSize() == 0 ){
+                if (file.getSize() == 0) {
                     continue;
                 }
                 if (file.getSize() > 10 * 1024 * 1024) {
@@ -57,18 +109,31 @@ public class ProductController {
                 }
 
                 String filename = storeFile(file);
+                ProductImage productImage = productService.createProductImage(existingroduct.getId(),
+                        ProductImageDTO.builder()
+                                .imageUrl(filename)
+                                .build());
+
+                productImages.add(productImage);
+
             }
 
-
-            return ResponseEntity.ok("Successfully Product! ");
+            return ResponseEntity.ok(productImages);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
+
+
     }
 
     private String storeFile(MultipartFile file) throws IOException {
-        String filename = StringUtils.cleanPath(file.getOriginalFilename());
+
+        if (!isImageFile(file) || file.getOriginalFilename() == null) {
+            throw new IOException("File must be an image");
+        }
+
+        String filename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         String uniqueFileName = UUID.randomUUID().toString() + "_" + filename;
 
         Path uploadDir = Paths.get("uploads");
@@ -83,14 +148,71 @@ public class ProductController {
 
     }
 
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.equals("image/png");
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable("id") Long productId, @Valid @RequestBody ProductDTO productDTO) {
+        try {
+            Product updatedProduct = productService.updateProduct(productId, productDTO);
+            return ResponseEntity.ok(updatedProduct);
+
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<String> getProductById(@PathVariable("id") String productId) {
-        return ResponseEntity.ok("Hello Product! " + productId);
+    public ResponseEntity<?> getProductById(@PathVariable("id") Long productId) {
+
+        try {
+            Product existingProduct = productService.getProductById(productId);
+            return ResponseEntity.ok(ProductResponse.fromProduct(existingProduct));
+
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable("id") String productId) {
-        return ResponseEntity.ok("Hello Product! " + productId);
+    public ResponseEntity<String> deleteProduct(@PathVariable("id") Long id) {
+        try {
+            productService.deleteProduct(id);
+            return ResponseEntity.ok(String.format("Product with id %d deleted successfully", id));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
     }
+
+
+    //@PostMapping("/generateFakeProducts")
+    public ResponseEntity<String> generateFakeProducts() {
+        Faker faker = new Faker();
+        for (int i = 0; i < 1_000_000; i++) {
+            String productName = faker.commerce().productName();
+            if (productService.existsByName(productName)) {
+                continue;
+            }
+            ProductDTO productDTO = ProductDTO.builder()
+                    .name(productName)
+                    .price(faker.number().numberBetween(0, 90_000_000))
+                    .description(faker.lorem().sentence())
+                    .categoryId((long) faker.number().numberBetween(2, 5))
+                    .thumbnail("")
+                    .build();
+            try {
+                productService.createProduct(productDTO);
+            } catch (DataNotFoundException e) {
+                return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            }
+        }
+        return ResponseEntity.ok("Fake products generated");
+    }
+
 
 }
