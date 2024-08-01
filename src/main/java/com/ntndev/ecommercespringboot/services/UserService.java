@@ -5,7 +5,7 @@ import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
 import com.ntndev.ecommercespringboot.models.User;
 
 public interface UserService {
-    User createUser(UserDTO userDTO) throws DataNotFoundException;
+    User createUser(UserDTO userDTO) throws Exception;
 
     String login(String phoneNumber, String password) throws Exception;
 }

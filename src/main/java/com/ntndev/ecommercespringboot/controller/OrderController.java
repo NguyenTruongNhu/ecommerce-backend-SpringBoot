@@ -5,6 +5,7 @@ import com.ntndev.ecommercespringboot.models.Order;
 import com.ntndev.ecommercespringboot.services.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +68,7 @@ public class OrderController {
         try {
             if (result.hasErrors()){
                 List<String> errorMessages = result.getFieldErrors().stream()
-                        .map(e -> e.getDefaultMessage())
+                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
                         .toList();
                 return ResponseEntity.badRequest().body(errorMessages);
             }

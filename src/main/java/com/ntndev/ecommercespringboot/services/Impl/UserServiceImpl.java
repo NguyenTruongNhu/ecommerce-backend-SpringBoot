@@ -3,6 +3,7 @@ package com.ntndev.ecommercespringboot.services.Impl;
 import com.ntndev.ecommercespringboot.components.JwtTokenUtil;
 import com.ntndev.ecommercespringboot.dtos.UserDTO;
 import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
+import com.ntndev.ecommercespringboot.exceptions.PermissionDenyException;
 import com.ntndev.ecommercespringboot.models.Role;
 import com.ntndev.ecommercespringboot.models.User;
 import com.ntndev.ecommercespringboot.repositories.RoleRepository;
@@ -28,11 +29,19 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
 
     @Override
-    public User createUser(UserDTO userDTO) throws DataNotFoundException {
+    public User createUser(UserDTO userDTO) throws Exception {
         String phoneNumber = userDTO.getPhoneNumber();
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new RuntimeException("User with phone number already exists");
         }
+
+        Role role = roleRepository.findById(userDTO.getRoleId())
+                .orElseThrow(() -> new DataNotFoundException("Role not found"));
+        if(role.getName().toUpperCase().equals(Role.ADMIN)){
+            throw new PermissionDenyException("You cannnot create an admin user!");
+        }
+
+
         User newUser = User.builder()
                 .fullName(userDTO.getFullName())
                 .phoneNumber(userDTO.getPhoneNumber())
@@ -43,8 +52,7 @@ public class UserServiceImpl implements UserService {
                 .googleAccountId(userDTO.getGoogleAccountId())
                 .build();
 
-        Role role = roleRepository.findById(userDTO.getRoleId())
-                .orElseThrow(() -> new DataNotFoundException("Role not found"));
+
         newUser.setRole(role);
 
         if (userDTO.getFacebookAccountId() == 0 && userDTO.getGoogleAccountId() == 0) {
