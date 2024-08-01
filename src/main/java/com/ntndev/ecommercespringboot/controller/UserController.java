@@ -2,9 +2,12 @@ package com.ntndev.ecommercespringboot.controller;
 
 import com.ntndev.ecommercespringboot.dtos.UserDTO;
 import com.ntndev.ecommercespringboot.dtos.UserLoginDTO;
+import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
+import com.ntndev.ecommercespringboot.models.User;
 import com.ntndev.ecommercespringboot.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,8 +28,9 @@ public class UserController {
     public ResponseEntity<?> createUser(@Valid @RequestBody UserDTO userDTO, BindingResult result) {
         try {
             if (result.hasErrors()) {
-                List<String> errorMessages = result.getFieldErrors().stream()
-                        .map(e -> e.getDefaultMessage())
+                List<String> errorMessages = result.getFieldErrors()
+                        .stream()
+                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
                         .toList();
 
                 return ResponseEntity.badRequest().body(errorMessages);
@@ -36,8 +40,8 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Passwords do not match!");
             }
 
-            userService.createUser(userDTO);
-            return ResponseEntity.ok("Registration successful!");
+           User user =  userService.createUser(userDTO);
+            return ResponseEntity.ok(user);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -46,7 +50,15 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
-        return ResponseEntity.ok("Login successful!");
+
+
+        try {
+            String token = userService.login(userLoginDTO.getPhoneNumber(), userLoginDTO.getPassword());
+            return ResponseEntity.ok(token);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 
