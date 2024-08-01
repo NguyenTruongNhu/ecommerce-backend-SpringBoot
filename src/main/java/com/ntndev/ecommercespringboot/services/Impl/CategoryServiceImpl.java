@@ -16,6 +16,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
 
 
+    // Tạo mới một Category từ CategoryDTO
     @Override
     public Category createCategory(CategoryDTO categoryDTO) {
         Category newCategory = Category.builder()
@@ -24,6 +25,7 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.save(newCategory);
     }
 
+    // Cập nhật một Category theo ID và dữ liệu từ CategoryDTO
     @Override
     public Category updateCategory(Long categoryId, CategoryDTO categoryDTO) {
         Category existingCategory = getCategoryById(categoryId);
@@ -31,16 +33,19 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.save(existingCategory);
     }
 
+    // Lấy một Category theo ID
     @Override
     public Category getCategoryById(Long id) {
         return categoryRepository.findById(id).orElseThrow(() -> new RuntimeException("Category not found"));
     }
 
+    // Lấy tất cả các Category
     @Override
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
+    // Xóa một Category theo ID
     @Override
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);

@@ -27,14 +27,16 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductImageRepository productImageRepository;
 
+    // Tạo mới một Product từ ProductDTO
     @Override
     public Product createProduct(ProductDTO productDTO) throws DataNotFoundException {
+        // Lấy thông tin Category từ repository theo ID
         Category existingCategory = categoryRepository.findById(productDTO.getCategoryId())
                 .orElseThrow(() ->
                         new DataNotFoundException(
-                                "Category not found with id +"
-                                        + productDTO.getCategoryId()));
+                                "Category not found with id " + productDTO.getCategoryId()));
 
+        // Tạo một đối tượng Product mới
         Product product = Product.builder()
                 .name(productDTO.getName())
                 .price(productDTO.getPrice())
@@ -43,21 +45,25 @@ public class ProductServiceImpl implements ProductService {
                 .description(productDTO.getDescription())
                 .build();
 
+        // Lưu đối tượng Product mới vào repository và trả về kết quả
         return productRepository.save(product);
     }
 
+    // Lấy một Product theo ID
     @Override
     public Product getProductById(Long id) throws DataNotFoundException {
         return productRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Product not found with id " + id));
     }
 
+    // Lấy tất cả các Product và trả về dưới dạng trang (Page)
     @Override
     public Page<ProductResponse> getAllProducts(PageRequest pageRequest) {
         return productRepository.findAll(pageRequest)
                 .map(ProductResponse::fromProduct);
     }
 
+    // Cập nhật một Product theo ID và dữ liệu từ ProductDTO
     @Override
     public Product updateProduct(Long id, ProductDTO productDTO) throws DataNotFoundException {
         Product existingProduct = getProductById(id);
@@ -66,21 +72,22 @@ public class ProductServiceImpl implements ProductService {
             Category existingCategory = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() ->
                             new DataNotFoundException(
-                                    "Category not found with id +"
-                                            + productDTO.getCategoryId()));
+                                    "Category not found with id " + productDTO.getCategoryId()));
 
+            // Cập nhật các thuộc tính của Product
             existingProduct.setName(productDTO.getName());
             existingProduct.setPrice(productDTO.getPrice());
             existingProduct.setThumbnail(productDTO.getThumbnail());
             existingProduct.setCategory(existingCategory);
             existingProduct.setDescription(productDTO.getDescription());
 
+            // Lưu lại Product đã cập nhật vào repository và trả về kết quả
             return productRepository.save(existingProduct);
         }
         return null;
-
     }
 
+    // Xóa một Product theo ID
     @Override
     public void deleteProduct(Long id) {
         Optional<Product> optProduct = productRepository.findById(id);
@@ -88,11 +95,13 @@ public class ProductServiceImpl implements ProductService {
         optProduct.ifPresent(productRepository::delete);
     }
 
+    // Kiểm tra sự tồn tại của Product theo tên
     @Override
     public boolean existsByName(String name) {
         return productRepository.existsByName(name);
     }
 
+    // Tạo mới một ProductImage từ ProductImageDTO
     @Override
     public ProductImage createProductImage(Long productId, ProductImageDTO productImageDTO) throws Exception {
         Product existingProduct = productRepository.findById(productId)
@@ -102,13 +111,14 @@ public class ProductServiceImpl implements ProductService {
                 .product(existingProduct)
                 .imageUrl(productImageDTO.getImageUrl())
                 .build();
+
+        // Kiểm tra số lượng hình ảnh của Product
         int size = productImageRepository.findByProductId(productId).size();
         if (size > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
             throw new InvalidParamException("Number of images for a product must not exceed " + ProductImage.MAXIMUM_IMAGES_PER_PRODUCT);
         }
+
+        // Lưu đối tượng ProductImage mới vào repository và trả về kết quả
         return productImageRepository.save(newProductImage);
-
-
     }
-
 }

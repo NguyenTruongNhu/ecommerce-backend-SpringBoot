@@ -28,20 +28,24 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenUtil jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
 
+    // Phương thức tạo User mới
     @Override
     public User createUser(UserDTO userDTO) throws Exception {
         String phoneNumber = userDTO.getPhoneNumber();
+        // Kiểm tra nếu số điện thoại đã tồn tại
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw new RuntimeException("User with phone number already exists");
         }
 
+        // Lấy thông tin Role từ RoleRepository
         Role role = roleRepository.findById(userDTO.getRoleId())
                 .orElseThrow(() -> new DataNotFoundException("Role not found"));
-        if(role.getName().toUpperCase().equals(Role.ADMIN)){
-            throw new PermissionDenyException("You cannnot create an admin user!");
+        // Nếu Role là ADMIN thì không cho phép tạo User
+        if (role.getName().toUpperCase().equals(Role.ADMIN)) {
+            throw new PermissionDenyException("You cannot create an admin user!");
         }
 
-
+        // Tạo đối tượng User mới
         User newUser = User.builder()
                 .fullName(userDTO.getFullName())
                 .phoneNumber(userDTO.getPhoneNumber())
@@ -52,39 +56,44 @@ public class UserServiceImpl implements UserService {
                 .googleAccountId(userDTO.getGoogleAccountId())
                 .build();
 
-
         newUser.setRole(role);
 
+        // Mã hóa mật khẩu nếu không có tài khoản Facebook hoặc Google
         if (userDTO.getFacebookAccountId() == 0 && userDTO.getGoogleAccountId() == 0) {
             String password = userDTO.getPassword();
             String encodedPassword = passwordEncoder.encode(password);
             newUser.setPassword(encodedPassword);
-
         }
 
+        // Lưu User mới vào UserRepository
         return userRepository.save(newUser);
     }
 
+    // Phương thức đăng nhập
     @Override
     public String login(String phoneNumber, String password) throws Exception {
         Optional<User> optUser = userRepository.findByPhoneNumber(phoneNumber);
-        if(optUser.isEmpty()){
+        // Kiểm tra nếu User không tồn tại
+        if (optUser.isEmpty()) {
             throw new DataNotFoundException("Invalid phone number/ password");
         }
         User existingUser = optUser.get();
-        //Check password
+        // Kiểm tra mật khẩu
         if (existingUser.getFacebookAccountId() == 0 && existingUser.getGoogleAccountId() == 0) {
-          if(!passwordEncoder.matches(password, existingUser.getPassword())) {
-              throw new BadCredentialsException("Wrong phone number or password!");
-          }
+            if (!passwordEncoder.matches(password, existingUser.getPassword())) {
+                throw new BadCredentialsException("Wrong phone number or password!");
+            }
         }
 
+        // Tạo đối tượng xác thực
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(
                         phoneNumber, password, existingUser.getAuthorities());
 
+        // Xác thực thông tin đăng nhập
         authenticationManager.authenticate(authenticationToken);
 
+        // Trả về token JWT
         return jwtTokenUtil.generateToken(existingUser);
     }
 }
