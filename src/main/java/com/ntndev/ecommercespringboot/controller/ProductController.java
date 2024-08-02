@@ -13,6 +13,7 @@ import com.ntndev.ecommercespringboot.services.ProductService;
 import com.ntndev.ecommercespringboot.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -92,71 +93,93 @@ public class ProductController {
             , @ModelAttribute("files") List<MultipartFile> files) {
 
         try {
-            Product existingroduct = productService.getProductById(productId);
+            Product existingProduct = productService.getProductById(productId);
             files = files == null ? new ArrayList<MultipartFile>() : files;
-            if (files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
+            if(files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
                 return ResponseEntity.badRequest().body(localizationUtils
                         .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_MAX_5));
             }
             List<ProductImage> productImages = new ArrayList<>();
             for (MultipartFile file : files) {
-                if (file.getSize() == 0) {
+                if(file.getSize() == 0) {
                     continue;
                 }
-                if (file.getSize() > 10 * 1024 * 1024) {
-                    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(localizationUtils
-                            .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_LARGE));
+                // Kiểm tra kích thước file và định dạng
+                if(file.getSize() > 10 * 1024 * 1024) { // Kích thước > 10MB
+                    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                            .body(localizationUtils
+                                    .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_LARGE));
                 }
-
                 String contentType = file.getContentType();
-                if (contentType == null || !contentType.equals("image/png")) {
-                    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(localizationUtils
-                            .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
+                if(contentType == null || !contentType.startsWith("image/")) {
+                    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                            .body(localizationUtils.getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
                 }
-
-                String filename = storeFile(file);
-                ProductImage productImage = productService.createProductImage(existingroduct.getId(),
+                // Lưu file và cập nhật thumbnail trong DTO
+                String filename = storeFile(file); // Thay thế hàm này với code của bạn để lưu file
+                //lưu vào đối tượng product trong DB
+                ProductImage productImage = productService.createProductImage(
+                        existingProduct.getId(),
                         ProductImageDTO.builder()
                                 .imageUrl(filename)
-                                .build());
-
+                                .build()
+                );
                 productImages.add(productImage);
-
             }
-
-            return ResponseEntity.ok(productImages);
-
+            return ResponseEntity.ok().body(productImages);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
 
+    }
+
+    @GetMapping("/images/{imageName}")
+    public ResponseEntity<?> viewImage(@PathVariable String imageName) {
+        try {
+            Path imagePath = Paths.get("uploads/"+imageName);
+            UrlResource resource = new UrlResource(imagePath.toUri());
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(resource);
+            } else {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(new UrlResource(Paths.get("uploads/notfound.jpg").toUri()));
+                //return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     private String storeFile(MultipartFile file) throws IOException {
 
         if (!isImageFile(file) || file.getOriginalFilename() == null) {
-            throw new IOException("File must be an image");
+            throw new IOException("Invalid image format");
         }
-
         String filename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        String uniqueFileName = UUID.randomUUID().toString() + "_" + filename;
-
-        Path uploadDir = Paths.get("uploads");
+        // Thêm UUID vào trước tên file để đảm bảo tên file là duy nhất
+        String uniqueFilename = UUID.randomUUID().toString() + "_" + filename;
+        // Đường dẫn đến thư mục mà bạn muốn lưu file
+        java.nio.file.Path uploadDir = Paths.get("uploads");
+        // Kiểm tra và tạo thư mục nếu nó không tồn tại
         if (!Files.exists(uploadDir)) {
             Files.createDirectories(uploadDir);
         }
-
-        Path destination = Paths.get(uploadDir.toString(), uniqueFileName);
+        // Đường dẫn đầy đủ đến file
+        java.nio.file.Path destination = Paths.get(uploadDir.toString(), uniqueFilename);
+        // Sao chép file vào thư mục đích
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-
-        return uniqueFileName;
+        return uniqueFilename;
 
     }
 
     private boolean isImageFile(MultipartFile file) {
         String contentType = file.getContentType();
-        return contentType != null && contentType.equals("image/png");
+        return contentType != null && contentType.startsWith("image/");
     }
 
 

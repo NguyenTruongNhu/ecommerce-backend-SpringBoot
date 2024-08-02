@@ -74,29 +74,34 @@ public class UserServiceImpl implements UserService {
 
     // Phương thức đăng nhập
     @Override
-    public String login(String phoneNumber, String password) throws Exception {
-        Optional<User> optUser = userRepository.findByPhoneNumber(phoneNumber);
-        // Kiểm tra nếu User không tồn tại
-        if (optUser.isEmpty()) {
+    public String login(String phoneNumber, String password,Long roleId) throws Exception {
+        Optional<User> optionalUser = userRepository.findByPhoneNumber(phoneNumber);
+        if(optionalUser.isEmpty()) {
             throw new DataNotFoundException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
         }
-        User existingUser = optUser.get();
-        // Kiểm tra mật khẩu
-        if (existingUser.getFacebookAccountId() == 0 && existingUser.getGoogleAccountId() == 0) {
-            if (!passwordEncoder.matches(password, existingUser.getPassword())) {
+        //trả JWT token ?
+        User existingUser = optionalUser.get();
+        //kiểm tra mật khẩu
+        if (existingUser.getFacebookAccountId() == 0
+                && existingUser.getGoogleAccountId() == 0) {
+            if(!passwordEncoder.matches(password, existingUser.getPassword())) {
                 throw new BadCredentialsException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
             }
         }
+        Optional<Role> optionalRole = roleRepository.findById(roleId);
+        if(optionalRole.isEmpty() || !roleId.equals(existingUser.getRole().getId())) {
+            throw new DataNotFoundException(localizationUtils.getLocalizedMessage(MessageKeys.ROLE_DOES_NOT_EXISTS));
+        }
+//        if(!optionalUser.get().isActive()) {
+//            throw new DataNotFoundException(localizationUtils.getLocalizedMessage(MessageKeys.USER_IS_LOCKED));
+//        }
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                phoneNumber, password,
+                existingUser.getAuthorities()
+        );
 
-        // Tạo đối tượng xác thực
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(
-                        phoneNumber, password, existingUser.getAuthorities());
-
-        // Xác thực thông tin đăng nhập
+        //authenticate with Java Spring security
         authenticationManager.authenticate(authenticationToken);
-
-        // Trả về token JWT
         return jwtTokenUtil.generateToken(existingUser);
     }
 }
