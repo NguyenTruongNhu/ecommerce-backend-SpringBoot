@@ -1,8 +1,10 @@
 package com.ntndev.ecommercespringboot.controller;
 
+import com.ntndev.ecommercespringboot.components.LocalizationUtils;
 import com.ntndev.ecommercespringboot.dtos.OrderDTO;
 import com.ntndev.ecommercespringboot.models.Order;
 import com.ntndev.ecommercespringboot.services.OrderService;
+import com.ntndev.ecommercespringboot.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -18,6 +20,7 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final LocalizationUtils localizationUtils;
 
     @PostMapping("")
     public ResponseEntity<?> createOrder(@Valid @RequestBody OrderDTO orderDTO,
@@ -35,7 +38,7 @@ public class OrderController {
             // Save order to database
             return ResponseEntity.ok(order);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error creating order");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -47,7 +50,7 @@ public class OrderController {
             List<Order> orders = orderService.findByUserId(userId);
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error getting orders");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
     @GetMapping("/{id}")
@@ -57,7 +60,7 @@ public class OrderController {
            Order existingOrder =  orderService.getOrder(id);
             return ResponseEntity.ok(existingOrder);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error getting orders");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -77,7 +80,7 @@ public class OrderController {
             // Update order in database
             return ResponseEntity.ok(order);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error updating order");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -86,9 +89,9 @@ public class OrderController {
         try {
             // Delete order from database
             orderService.deleteOrder(id);
-            return ResponseEntity.ok("Order deleted successfully");
+            return ResponseEntity.ok(localizationUtils.getLocalizedMessage(MessageKeys.DELETE_ORDER_SUCCESSFULLY));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error deleting order");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

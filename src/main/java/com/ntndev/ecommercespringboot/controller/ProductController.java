@@ -1,6 +1,7 @@
 package com.ntndev.ecommercespringboot.controller;
 
 import com.github.javafaker.Faker;
+import com.ntndev.ecommercespringboot.components.LocalizationUtils;
 import com.ntndev.ecommercespringboot.dtos.ProductDTO;
 import com.ntndev.ecommercespringboot.dtos.ProductImageDTO;
 import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
@@ -9,6 +10,7 @@ import com.ntndev.ecommercespringboot.models.ProductImage;
 import com.ntndev.ecommercespringboot.responses.ProductListResponse;
 import com.ntndev.ecommercespringboot.responses.ProductResponse;
 import com.ntndev.ecommercespringboot.services.ProductService;
+import com.ntndev.ecommercespringboot.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,7 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductService productService;
+    private final LocalizationUtils localizationUtils;
 
     @GetMapping("")
     public ResponseEntity<ProductListResponse> getProducts(
@@ -92,7 +95,8 @@ public class ProductController {
             Product existingroduct = productService.getProductById(productId);
             files = files == null ? new ArrayList<MultipartFile>() : files;
             if (files.size() > ProductImage.MAXIMUM_IMAGES_PER_PRODUCT) {
-                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("You can only upload a maximum of 5 images");
+                return ResponseEntity.badRequest().body(localizationUtils
+                        .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_MAX_5));
             }
             List<ProductImage> productImages = new ArrayList<>();
             for (MultipartFile file : files) {
@@ -100,12 +104,14 @@ public class ProductController {
                     continue;
                 }
                 if (file.getSize() > 10 * 1024 * 1024) {
-                    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("File size must be less than 10MB");
+                    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(localizationUtils
+                            .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_LARGE));
                 }
 
                 String contentType = file.getContentType();
                 if (contentType == null || !contentType.equals("image/png")) {
-                    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body("File must be an image");
+                    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(localizationUtils
+                            .getLocalizedMessage(MessageKeys.UPLOAD_IMAGES_FILE_MUST_BE_IMAGE));
                 }
 
                 String filename = storeFile(file);

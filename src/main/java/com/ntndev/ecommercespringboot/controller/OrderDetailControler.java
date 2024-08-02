@@ -1,10 +1,12 @@
 package com.ntndev.ecommercespringboot.controller;
 
+import com.ntndev.ecommercespringboot.components.LocalizationUtils;
 import com.ntndev.ecommercespringboot.dtos.OrderDTO;
 import com.ntndev.ecommercespringboot.dtos.OrderDetailDTO;
 import com.ntndev.ecommercespringboot.models.OrderDetail;
 import com.ntndev.ecommercespringboot.responses.OrderDetailResponse;
 import com.ntndev.ecommercespringboot.services.OrderDetailService;
+import com.ntndev.ecommercespringboot.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderDetailControler {
     private final OrderDetailService orderDetailService;
+    private final LocalizationUtils localizationUtils;
 
     @PostMapping("")
     public ResponseEntity<?> createOrderDetail(@Valid @RequestBody OrderDetailDTO orderDetailDTO,
@@ -35,7 +38,7 @@ public class OrderDetailControler {
 
             return ResponseEntity.ok().body(OrderDetailResponse.fromOrderDetail(newOrderDetail));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error creating order detail");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -47,7 +50,7 @@ public class OrderDetailControler {
             return ResponseEntity.ok().body(OrderDetailResponse.fromOrderDetail(orderDetail));
 //            return ResponseEntity.ok(orderDetail);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error getting orders");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -59,7 +62,7 @@ public class OrderDetailControler {
             List<OrderDetailResponse> orderDetailResponses = orderDetails.stream().map(OrderDetailResponse::fromOrderDetail).toList();
             return ResponseEntity.ok().body(orderDetailResponses);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error getting orders details");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -79,7 +82,7 @@ public class OrderDetailControler {
             OrderDetail orderDetail = orderDetailService.updateOrderDetail(id, orderDetailDTO);
             return ResponseEntity.ok(orderDetail);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error updating order detail");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -88,9 +91,9 @@ public class OrderDetailControler {
         try {
             // Delete order from database
             orderDetailService.deleteOrderDetail(id);
-            return ResponseEntity.ok("Order detail deleted successfully");
+            return ResponseEntity.ok(localizationUtils.getLocalizedMessage(MessageKeys.DELETE_ORDER_DETAIL_SUCCESSFULLY));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error deleting order detail");
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

@@ -1,6 +1,6 @@
 package com.ntndev.ecommercespringboot.filters;
 
-import com.ntndev.ecommercespringboot.components.JwtTokenUtil;
+import com.ntndev.ecommercespringboot.components.JwtTokenUtils;
 import com.ntndev.ecommercespringboot.models.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,13 +29,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private String apiPrefix;
 
     private final UserDetailsService userDetailsService;
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtils jwtTokenUtil;
 
     // Phương thức xử lý lọc chính
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             // Bỏ qua kiểm tra token cho một số yêu cầu nhất định
+
+
             if (isBypassToken(request)) {
                 filterChain.doFilter(request, response);
                 return;

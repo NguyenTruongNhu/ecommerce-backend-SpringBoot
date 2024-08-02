@@ -1,6 +1,6 @@
 package com.ntndev.ecommercespringboot.services.Impl;
 
-import com.ntndev.ecommercespringboot.components.JwtTokenUtil;
+import com.ntndev.ecommercespringboot.components.JwtTokenUtils;
 import com.ntndev.ecommercespringboot.dtos.UserDTO;
 import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
 import com.ntndev.ecommercespringboot.exceptions.PermissionDenyException;
@@ -25,7 +25,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtils jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
 
     // Phương thức tạo User mới
