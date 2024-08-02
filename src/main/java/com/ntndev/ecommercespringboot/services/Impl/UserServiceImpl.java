@@ -1,6 +1,7 @@
 package com.ntndev.ecommercespringboot.services.Impl;
 
 import com.ntndev.ecommercespringboot.components.JwtTokenUtils;
+import com.ntndev.ecommercespringboot.components.LocalizationUtils;
 import com.ntndev.ecommercespringboot.dtos.UserDTO;
 import com.ntndev.ecommercespringboot.exceptions.DataNotFoundException;
 import com.ntndev.ecommercespringboot.exceptions.PermissionDenyException;
@@ -9,6 +10,7 @@ import com.ntndev.ecommercespringboot.models.User;
 import com.ntndev.ecommercespringboot.repositories.RoleRepository;
 import com.ntndev.ecommercespringboot.repositories.UserRepository;
 import com.ntndev.ecommercespringboot.services.UserService;
+import com.ntndev.ecommercespringboot.utils.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtils jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
+    private final LocalizationUtils localizationUtils;
 
     // Phương thức tạo User mới
     @Override
@@ -75,13 +78,13 @@ public class UserServiceImpl implements UserService {
         Optional<User> optUser = userRepository.findByPhoneNumber(phoneNumber);
         // Kiểm tra nếu User không tồn tại
         if (optUser.isEmpty()) {
-            throw new DataNotFoundException("Invalid phone number/ password");
+            throw new DataNotFoundException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
         }
         User existingUser = optUser.get();
         // Kiểm tra mật khẩu
         if (existingUser.getFacebookAccountId() == 0 && existingUser.getGoogleAccountId() == 0) {
             if (!passwordEncoder.matches(password, existingUser.getPassword())) {
-                throw new BadCredentialsException("Wrong phone number or password!");
+                throw new BadCredentialsException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
             }
         }
 
