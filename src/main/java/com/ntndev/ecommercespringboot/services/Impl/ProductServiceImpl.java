@@ -12,6 +12,7 @@ import com.ntndev.ecommercespringboot.repositories.ProductImageRepository;
 import com.ntndev.ecommercespringboot.repositories.ProductRepository;
 import com.ntndev.ecommercespringboot.responses.ProductResponse;
 import com.ntndev.ecommercespringboot.services.ProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
 
     // Tạo mới một Product từ ProductDTO
     @Override
+    @Transactional
     public Product createProduct(ProductDTO productDTO) throws DataNotFoundException {
         // Lấy thông tin Category từ repository theo ID
         Category existingCategory = categoryRepository.findById(productDTO.getCategoryId())
@@ -65,6 +67,7 @@ public class ProductServiceImpl implements ProductService {
 
     // Cập nhật một Product theo ID và dữ liệu từ ProductDTO
     @Override
+    @Transactional
     public Product updateProduct(Long id, ProductDTO productDTO) throws DataNotFoundException {
         Product existingProduct = getProductById(id);
 
@@ -103,6 +106,7 @@ public class ProductServiceImpl implements ProductService {
 
     // Tạo mới một ProductImage từ ProductImageDTO
     @Override
+    @Transactional
     public ProductImage createProductImage(Long productId, ProductImageDTO productImageDTO) throws Exception {
         Product existingProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new DataNotFoundException("Product not found with id " + productId));

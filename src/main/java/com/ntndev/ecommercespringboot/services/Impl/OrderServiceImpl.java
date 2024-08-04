@@ -8,6 +8,7 @@ import com.ntndev.ecommercespringboot.models.User;
 import com.ntndev.ecommercespringboot.repositories.OrderRepository;
 import com.ntndev.ecommercespringboot.repositories.UserRepository;
 import com.ntndev.ecommercespringboot.services.OrderService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class OrderServiceImpl implements OrderService {
 
     // Tạo mới một Order từ OrderDTO
     @Override
+    @Transactional
     public Order createOrder(OrderDTO orderDTO) throws Exception {
         // Lấy thông tin User từ repository theo ID
         User user = userRepository.findById(orderDTO.getUserId())
@@ -63,6 +65,7 @@ public class OrderServiceImpl implements OrderService {
 
     // Cập nhật một Order theo ID và dữ liệu từ OrderDTO
     @Override
+    @Transactional
     public Order updateOrder(Long id, OrderDTO orderDTO) throws DataNotFoundException {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("Order not found"));
@@ -83,6 +86,7 @@ public class OrderServiceImpl implements OrderService {
 
     // Xóa một Order theo ID
     @Override
+    @Transactional
     public void deleteOrder(Long id) {
         Order order = orderRepository.findById(id).orElse(null);
         if (order != null) {

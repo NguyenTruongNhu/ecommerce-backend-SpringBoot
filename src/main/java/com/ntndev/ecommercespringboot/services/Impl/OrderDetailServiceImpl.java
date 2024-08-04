@@ -9,6 +9,7 @@ import com.ntndev.ecommercespringboot.repositories.OrderDetailRepository;
 import com.ntndev.ecommercespringboot.repositories.OrderRepository;
 import com.ntndev.ecommercespringboot.repositories.ProductRepository;
 import com.ntndev.ecommercespringboot.services.OrderDetailService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
 
     // Tạo mới một OrderDetail từ OrderDetailDTO
     @Override
+    @Transactional
     public OrderDetail createOrderDetail(OrderDetailDTO orderDetailDTO) throws Exception {
         // Lấy thông tin Order từ repository theo ID
         Order order = orderRepository.findById(orderDetailDTO.getOrderId())
@@ -55,6 +57,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
 
     // Cập nhật một OrderDetail theo ID và dữ liệu từ OrderDetailDTO
     @Override
+    @Transactional
     public OrderDetail updateOrderDetail(Long id, OrderDetailDTO orderDetailDTO) throws DataNotFoundException {
         OrderDetail existingOrderDetail = orderDetailRepository.findById(id).orElse(null);
         Order existingOrder = orderRepository.findById(orderDetailDTO.getOrderId())
@@ -77,6 +80,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
 
     // Xóa một OrderDetail theo ID
     @Override
+    @Transactional
     public void deleteOrderDetail(Long id) {
         orderDetailRepository.deleteById(id);
     }

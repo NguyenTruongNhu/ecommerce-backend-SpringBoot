@@ -11,6 +11,7 @@ import com.ntndev.ecommercespringboot.repositories.RoleRepository;
 import com.ntndev.ecommercespringboot.repositories.UserRepository;
 import com.ntndev.ecommercespringboot.services.UserService;
 import com.ntndev.ecommercespringboot.utils.MessageKeys;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;

@@ -4,6 +4,7 @@ import com.ntndev.ecommercespringboot.dtos.CategoryDTO;
 import com.ntndev.ecommercespringboot.models.Category;
 import com.ntndev.ecommercespringboot.repositories.CategoryRepository;
 import com.ntndev.ecommercespringboot.services.CategoryService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     // Tạo mới một Category từ CategoryDTO
     @Override
+    @Transactional
     public Category createCategory(CategoryDTO categoryDTO) {
         Category newCategory = Category.builder()
                 .name(categoryDTO.getName())
@@ -27,6 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     // Cập nhật một Category theo ID và dữ liệu từ CategoryDTO
     @Override
+    @Transactional
     public Category updateCategory(Long categoryId, CategoryDTO categoryDTO) {
         Category existingCategory = getCategoryById(categoryId);
         existingCategory.setName(categoryDTO.getName());
@@ -47,6 +50,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     // Xóa một Category theo ID
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);
     }
