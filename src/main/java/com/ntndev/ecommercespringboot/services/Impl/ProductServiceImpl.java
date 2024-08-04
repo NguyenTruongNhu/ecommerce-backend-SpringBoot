@@ -60,9 +60,13 @@ public class ProductServiceImpl implements ProductService {
 
     // Lấy tất cả các Product và trả về dưới dạng trang (Page)
     @Override
-    public Page<ProductResponse> getAllProducts(PageRequest pageRequest) {
-        return productRepository.findAll(pageRequest)
-                .map(ProductResponse::fromProduct);
+    public Page<ProductResponse> getAllProducts(String keyword, Long categoryId,PageRequest pageRequest) {
+
+        Page<Product> productsPage;
+
+        productsPage = productRepository.searchProducts(keyword, categoryId, pageRequest);
+
+        return productsPage.map(ProductResponse::fromProduct);
     }
 
     // Cập nhật một Product theo ID và dữ liệu từ ProductDTO

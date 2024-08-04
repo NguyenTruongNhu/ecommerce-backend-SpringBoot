@@ -12,7 +12,7 @@ import org.springframework.data.domain.PageRequest;
 public interface ProductService {
     Product createProduct(ProductDTO productDTO) throws DataNotFoundException;
     Product getProductById(Long id) throws DataNotFoundException;
-    Page<ProductResponse> getAllProducts(PageRequest pageRequest);
+    Page<ProductResponse> getAllProducts(String keyword, Long categoryId,PageRequest pageRequest);
     Product updateProduct(Long id, ProductDTO productDTO) throws DataNotFoundException;
 
     void deleteProduct(Long id);
