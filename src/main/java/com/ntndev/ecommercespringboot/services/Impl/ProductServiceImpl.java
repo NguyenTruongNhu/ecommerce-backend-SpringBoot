@@ -18,11 +18,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
+
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -49,6 +51,10 @@ public class ProductServiceImpl implements ProductService {
 
         // Lưu đối tượng Product mới vào repository và trả về kết quả
         return productRepository.save(product);
+    }
+    @Override
+    public List<Product> findProductsByIds(List<Long> productIds) {
+        return productRepository.findProductsByIds(productIds);
     }
 
     // Lấy một Product theo ID
@@ -129,4 +135,7 @@ public class ProductServiceImpl implements ProductService {
         // Lưu đối tượng ProductImage mới vào repository và trả về kết quả
         return productImageRepository.save(newProductImage);
     }
+
+
+
 }

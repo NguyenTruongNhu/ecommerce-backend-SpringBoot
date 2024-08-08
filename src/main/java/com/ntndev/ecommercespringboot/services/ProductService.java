@@ -9,6 +9,8 @@ import com.ntndev.ecommercespringboot.responses.ProductResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
+
 public interface ProductService {
     Product createProduct(ProductDTO productDTO) throws DataNotFoundException;
     Product getProductById(Long id) throws DataNotFoundException;
@@ -18,4 +20,6 @@ public interface ProductService {
     void deleteProduct(Long id);
     boolean existsByName(String name);
     ProductImage createProductImage(Long productId, ProductImageDTO productImageDTO) throws Exception;
+
+    List<Product> findProductsByIds(List<Long> productIds);
 }
