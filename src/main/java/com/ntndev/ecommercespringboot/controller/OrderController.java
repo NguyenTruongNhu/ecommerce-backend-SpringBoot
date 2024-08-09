@@ -3,6 +3,7 @@ package com.ntndev.ecommercespringboot.controller;
 import com.ntndev.ecommercespringboot.components.LocalizationUtils;
 import com.ntndev.ecommercespringboot.dtos.OrderDTO;
 import com.ntndev.ecommercespringboot.models.Order;
+import com.ntndev.ecommercespringboot.responses.OrderResponse;
 import com.ntndev.ecommercespringboot.services.OrderService;
 import com.ntndev.ecommercespringboot.utils.MessageKeys;
 import jakarta.validation.Valid;
@@ -58,7 +59,7 @@ public class OrderController {
         try {
             // Get orders from database
            Order existingOrder =  orderService.getOrder(id);
-            return ResponseEntity.ok(existingOrder);
+            return ResponseEntity.ok(OrderResponse.fromOrder(existingOrder));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
